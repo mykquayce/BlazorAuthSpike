@@ -1,4 +1,8 @@
 ﻿@page "/"
+@using BlazorAuthSpike.BlazorApp1.Data
+@inject IServiceScopeFactory _serviceScopeFactory
+
+<p>@_session?.State</p>
 
 <PageTitle>Index</PageTitle>
 
@@ -7,3 +11,13 @@
 Welcome to your new app.
 
 <SurveyPrompt Title="How is Blazor working for you?" />
+
+@code{
+	private Session? _session;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await using var scope = _serviceScopeFactory.CreateAsyncScope();
+		_session = scope.ServiceProvider.GetRequiredService<Session>();
+	}
+}

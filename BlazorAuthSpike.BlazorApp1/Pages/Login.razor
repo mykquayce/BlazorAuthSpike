@@ -1,0 +1,56 @@
+﻿@page "/login"
+@using System.Security.Claims
+@using BlazorAuthSpike.BlazorApp1.Data;
+@using System.Security.Principal;
+@inject IServiceScopeFactory _serviceScopeFactory;
+@inject AuthenticationStateProvider _authenticationStateProvider
+@inject DuoUniversal.Client _duoClient
+@inject NavigationManager _navigationManager
+
+<h3>Login</h3>
+
+<p>@_authenticated</p>
+
+@if (_claims.Any())
+{
+	<ul>
+		@foreach (var claim in _claims)
+		{
+			<li>@claim.Type: @claim.Value</li>
+		}
+	</ul>
+}
+
+<form onsubmit="@(()=>DoSubmit())">
+	<input @bind="_username"/>
+	<button type="submit">Submit</button>
+</form>
+
+@code {
+	private bool _authenticated = false;
+	private string? _username;
+	private IEnumerable<Claim> _claims = Enumerable.Empty<Claim>();
+
+	protected override async Task OnInitializedAsync()
+	{
+		ClaimsPrincipal user;
+		{
+			await using var scope = _serviceScopeFactory.CreateAsyncScope();
+			var provider = scope.ServiceProvider.GetRequiredService<AuthenticationStateProvider>();
+			var state = await provider.GetAuthenticationStateAsync();
+			user = state.User;
+		}
+		_authenticated = user.Identity?.IsAuthenticated ?? false;
+		_claims = user.Claims;
+	}
+
+	private async Task DoSubmit()
+	{
+		await using var scope = _serviceScopeFactory.CreateAsyncScope();
+		var provider = scope.ServiceProvider.GetRequiredService<AuthenticationStateProvider>();
+		var duoState = await ((DuoAuthenticationStateProvider)provider).CreateUserAsync(_username!);
+		//var authenticationState = await provider.GetAuthenticationStateAsync();
+		var uri = _duoClient.GenerateAuthUri(username: _username!, state: duoState);
+		_navigationManager.NavigateTo(uri);
+	}
+}

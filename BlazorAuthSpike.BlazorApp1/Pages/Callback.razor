@@ -1,0 +1,22 @@
+﻿@page "/callback"
+@using BlazorAuthSpike.BlazorApp1.Data;
+@inject IServiceScopeFactory _serviceScopeFactory;
+@inject NavigationManager _navigationManager
+
+<h3>Callback</h3>
+
+@code {
+	[Parameter]
+	public string? Code { get; set; }
+
+	[Parameter]
+	public string? State { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		await using var scope = _serviceScopeFactory.CreateAsyncScope();
+		var provider = scope.ServiceProvider.GetRequiredService<AuthenticationStateProvider>();
+		await ((DuoAuthenticationStateProvider)provider).LoginAsync(Code!);
+		_navigationManager.NavigateTo("/login");
+	}
+}

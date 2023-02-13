@@ -4,6 +4,11 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>ae03c796-aa7a-4a57-9674-182dab31d90e</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DuoUniversal" Version="1.2.0" />
+  </ItemGroup>
 
 </Project>
