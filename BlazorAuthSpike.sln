@@ -5,6 +5,12 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAuthSpike.BlazorApp1", "BlazorAuthSpike.BlazorApp1\BlazorAuthSpike.BlazorApp1.csproj", "{0BE67060-87A2-4D53-B707-59F4A1EAAEC1}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{97505407-9875-48D3-832C-4FB3E9E4D126}"
+	ProjectSection(SolutionItems) = preProject
+		build.ps1 = build.ps1
+		docker-compose.yml = docker-compose.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

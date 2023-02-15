@@ -1,0 +1,27 @@
+version: '3.7'
+
+services:
+  api:
+    image: eassbhhtgu/blazor-auth-spike:latest
+    entrypoint: bash -c "/usr/sbin/update-ca-certificates && dotnet BlazorAuthSpike.BlazorApp1.dll"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_Kestrel__Certificates__Default__KeyPath: /run/secrets/localhost.key
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /run/secrets/localhost.crt
+      ASPNETCORE_HTTPS_PORT: "443"
+      ASPNETCORE_URLS: https://+
+    ports:
+    - 443:443/tcp
+    secrets:
+    - source: localhost.crt
+    - source: localhost.key
+    - source: ca.crt
+      target: /usr/local/share/ca-certificates/ca.crt
+
+secrets:
+  ca.crt:
+    file: ${USERPROFILE}\.aspnet\https\ca.crt
+  localhost.crt:
+    file: ${USERPROFILE}\.aspnet\https\blazorauthspike.crt
+  localhost.key:
+    file: ${USERPROFILE}\.aspnet\https\blazorauthspike.key
