@@ -1,4 +1,11 @@
 ﻿@page "/"
+@using Microsoft.Extensions.Caching.Distributed;
+@using System.Security.Cryptography;
+@using System.Security.Claims;
+@using System.Text.Json;
+@using System.Text;
+@inject Blazored.LocalStorage.ILocalStorageService _browserStorage
+@inject IDistributedCache _serverStorage
 
 <PageTitle>Index</PageTitle>
 
@@ -7,3 +14,63 @@
 Welcome to your new app.
 
 <SurveyPrompt Title="How is Blazor working for you?" />
+
+<p>@_authenticated</p>
+
+@code {
+	private bool _authenticated;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (!firstRender){ return; }
+
+		using var cts = new CancellationTokenSource(millisecondsDelay: 1000000000);
+		var sessionId = await _browserStorage.GetItemAsync<Guid?>("sessionid", cts.Token);
+
+		if (sessionId.HasValue)
+		{
+			IDictionary<string, string>? claimsDictionary;
+			{
+				var bytes = await _serverStorage.GetAsync(key: sessionId!.Value.ToString("n"), cts.Token);
+				if (bytes is not null)
+				{
+					await using var stream = new MemoryStream(bytes!);
+					claimsDictionary = await JsonSerializer.DeserializeAsync<Dictionary<string, string>>(stream, cancellationToken: cts.Token)!;
+				}
+				else
+				{
+					await _browserStorage.RemoveItemAsync("sessionid", cts.Token);
+					claimsDictionary = null;
+				}
+			}
+			if (claimsDictionary?.Any() ?? false)
+			{
+				var claims = new List<Claim>();
+				foreach (var (type, value) in claimsDictionary)
+				{
+					var claim = new Claim(type, value);
+					claims.Add(claim);
+				}
+				var identity = new ClaimsIdentity(claims, authenticationType: "Duo");
+				_authenticated = identity.IsAuthenticated;
+				base.StateHasChanged();
+			}
+		}
+		else
+		{
+			sessionId = new Guid(RandomNumberGenerator.GetBytes(count: 16));
+			await _browserStorage.SetItemAsync("sessionid", sessionId, cts.Token);
+			var claimsDictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+				{
+					[ClaimTypes.Name] = "bob",
+				};
+			var json = JsonSerializer.Serialize(claimsDictionary);
+			var bytes = Encoding.UTF8.GetBytes(json);
+			var options = new DistributedCacheEntryOptions
+			{
+				AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1),
+			};
+			await _serverStorage.SetAsync(sessionId.Value.ToString("n"), bytes, options, cts.Token);
+		}
+	}
+}
